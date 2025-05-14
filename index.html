@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Explorer - Interactive Solar System</title>
+    <style>
+        :root {
+            --primary-color: #1a1a2e;
+            --secondary-color: #16213e;
+            --accent-color: #0f3460;
+            --text-color: #e8e8e8;
+            --highlight-color: #e94560;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: rgba(26, 26, 46, 0.8);
+            padding: 1.5rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .logo-icon {
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--highlight-color);
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 1rem;
+            background: linear-gradient(rgba(26, 26, 46, 0.5), rgba(26, 26, 46, 0.8)), url('/api/placeholder/1200/600') center/cover;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(15, 52, 96, 0.2) 0%, rgba(26, 26, 46, 0.5) 100%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #e94560, #8a2be2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .cta-button {
+            padding: 0.8rem 2rem;
+            background-color: var(--highlight-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            background-color: #d03d54;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3);
+        }
+
+        .solar-system {
+            margin: 6rem 0;
+            position: relative;
+            min-height: 800px;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .solar-system h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--text-color);
+        }
+
+        .solar-system-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            height: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sun {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffff00, #ff8700);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ffff00, 0 0 100px #ff8700;
+            z-index: 10;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            transform-origin: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .planet:hover {
+            transform: scale(1.2);
+        }
+
+        .planet-info {
+            position: absolute;
+            background-color: rgba(15, 52, 96, 0.9);
+            color: var(--text-color);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 300px;
+            transform: translateX(-50%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .planet-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--highlight-color);
+        }
+
+        .planet-info p {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .planet-info-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .features {
+            padding: 4rem 2rem;
+            background-color: var(--secondary-color);
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .features-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: var(--accent-color);
+            border-radius: 8px;
+            padding: 2rem;
+            width: 300px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--highlight-color);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+        }
+
+        .about {
+            padding: 4rem 2rem;
+            background-color: var(--primary-color);
+        }
+
+        .about-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .about p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--highlight-color);
+        }
+
+        .stat-text {
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        footer {
+            background-color: var(--secondary-color);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--highlight-color);
+        }
+
+        .footer-text {
+            font-size: 0.9rem;
+            color: rgba(232, 232, 232, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .feature-card {
+                width: 100%;
+                max-width: 350px;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .solar-system-container {
+                height: 400px;
+            }
+
+            .sun {
+                width: 60px;
+                height: 60px;
+            }
+
+            .stats {
+                gap: 1rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .stat-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Stars background animation */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--primary-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--highlight-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <header>
+        <nav>
+            <div class="logo">
+                <span class="logo-icon">🪐</span>
+                <span>Space Explorer</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#solar-system">Solar System</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+            </div>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <h1>Explore Our Solar System</h1>
+        <p>An interactive journey through the planets, moons, and celestial bodies of our cosmic neighborhood.</p>
+        <button class="cta-button" id="start-exploring">Start Exploring</button>
+    </section>
+
+    <section id="solar-system" class="solar-system">
+        <h2>Interactive Solar System</h2>
+        <div class="solar-system-container" id="solar-system-container">
+            <div class="sun"></div>
+            <!-- Planets will be added here via JavaScript -->
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <h2>Features</h2>
+        <div class="features-container">
+            <div class="feature-card">
+                <div class="feature-icon">🌌</div>
+                <h3>Interactive Visualization</h3>
+                <p>Explore our solar system with beautiful animations and detailed information about each planet.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Planet Statistics</h3>
+                <p>Access up-to-date statistics and facts about all planets in our solar system.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Zoom & Explore</h3>
+                <p>Zoom in and out to get a closer look at planets and their unique characteristics.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="about-container">
+            <h2>About This Project</h2>
+            <p>Space Explorer is an interactive web application designed to provide an educational and visually engaging experience of our solar system. Built with HTML, CSS, and JavaScript, this project demonstrates modern web development techniques and responsive design.</p>
+            <p>The project is fully open-source and welcomes contributions from the community. Use it as a learning tool, a basis for educational projects, or just to explore our cosmic neighborhood!</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">8</div>
+                    <div class="stat-text">Planets</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">200+</div>
+                    <div class="stat-text">Moons</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1</div>
+                    <div class="stat-text">Solar System</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#home">Home</a>
+                <a href="#solar-system">Solar System</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="https://github.com/yourusername/space-explorer" target="_blank">GitHub</a>
+            </div>
+            <p class="footer-text">© 2025 Space Explorer.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Create stars for background
+        document.addEventListener('DOMContentLoaded', function() {
+            const starsContainer = document.getElementById('stars');
+            const numberOfStars = 200;
+            
+            for (let i = 0; i < numberOfStars; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random position
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // Random size
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Random animation delay
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+
+            // Smooth scroll for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Start exploring button
+            document.getElementById('start-exploring').addEventListener('click', function() {
+                document.getElementById('solar-system').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+
+            // Create the solar system
+            createSolarSystem();
+        });
+
+        function createSolarSystem() {
+            const container = document.getElementById('solar-system-container');
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+
+            // Planet data
+            const planets = [
+                {
+                    name: 'Mercury',
+                    radius: 10,
+                    distance: 70,
+                    color: '#a6a6a6',
+                    orbitSpeed: 4.1,
+                    info: 'The smallest planet in our solar system and closest to the Sun. Mercury has a thin atmosphere and a surface covered in craters similar to our Moon.'
+                },
+                {
+                    name: 'Venus',
+                    radius: 15,
+                    distance: 100,
+                    color: '#e39e54',
+                    orbitSpeed: 1.6,
+                    info: 'Often called Earth\'s twin due to its similar size. Venus has a thick atmosphere that traps heat, making it the hottest planet in our solar system.'
+                },
+                {
+                    name: 'Earth',
+                    radius: 16,
+                    distance: 140,
+                    color: '#6b93d6',
+                    orbitSpeed: 1,
+                    info: 'Our home planet is the only place known to harbor life. Earth has one natural satellite, the Moon, and its atmosphere protects us from the Sun\'s radiation.'
+                },
+                {
+                    name: 'Mars',
+                    radius: 12,
+                    distance: 180,
+                    color: '#c1440e',
+                    orbitSpeed: 0.5,
+                    info: 'Known as the Red Planet due to iron oxide (rust) on its surface. Mars has the largest volcano and the deepest canyon in the solar system.'
+                },
+                {
+                    name: 'Jupiter',
+                    radius: 30,
+                    distance: 240,
+                    color: '#e0ae6f',
+                    orbitSpeed: 0.08,
+                    info: 'The largest planet in our solar system, Jupiter is a gas giant with a Great Red Spot - a storm that has been raging for hundreds of years.'
+                },
+                {
+                    name: 'Saturn',
+                    radius: 25,
+                    distance: 300,
+                    color: '#f0e2a4',
+                    orbitSpeed: 0.03,
+                    info: 'Famous for its beautiful ring system, Saturn is another gas giant. Its density is so low that it would float in water if there were an ocean large enough.'
+                },
+                {
+                    name: 'Uranus',
+                    radius: 20,
+                    distance: 350,
+                    color: '#a5d2d9',
+                    orbitSpeed: 0.01,
+                    info: 'Uranus rotates on its side, likely due to a massive collision in its past. It appears blue-green due to methane in its atmosphere.'
+                },
+                {
+                    name: 'Neptune',
+                    radius: 20,
+                    distance: 400,
+                    color: '#5b5ddf',
+                    orbitSpeed: 0.006,
+                    info: 'The windiest planet in our solar system with winds reaching up to 2,100 km/h. Neptune has a deep blue color due to methane in its atmosphere.'
+                }
+            ];
+
+            // Create orbits and planets
+            planets.forEach(planet => {
+                // Create orbit
+                const orbit = document.createElement('div');
+                orbit.classList.add('orbit');
+                orbit.style.width = `${planet.distance * 2}px`;
+                orbit.style.height = `${planet.distance * 2}px`;
+                orbit.style.left = `${centerX - planet.distance}px`;
+                orbit.style.top = `${centerY - planet.distance}px`;
+                container.appendChild(orbit);
+
+                // Create planet
+                const planetElement = document.createElement('div');
+                planetElement.classList.add('planet');
+                planetElement.id = planet.name.toLowerCase();
+                planetElement.style.width = `${planet.radius * 2}px`;
+                planetElement.style.height = `${planet.radius * 2}px`;
+                planetElement.style.backgroundColor = planet.color;
+                
+                // Set initial position
+                const angle = Math.random() * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * planet.distance - planet.radius;
+                const y = centerY + Math.sin(angle) * planet.distance - planet.radius;
+                planetElement.style.left = `${x}px`;
+                planetElement.style.top = `${y}px`;
+                
+                container.appendChild(planetElement);
+
+                // Create info box
+                const infoBox = document.createElement('div');
+                infoBox.classList.add('planet-info');
+                infoBox.id = `${planet.name.toLowerCase()}-info`;
+                infoBox.innerHTML = `
+                    <h3>${planet.name}</h3>
+                    <p>${planet.info}</p>
+                    <p><strong>Distance from Sun:</strong> ${planet.distance} million km</p>
+                    <p><strong>Orbital Period:</strong> ${(planet.orbitSpeed * 100).toFixed(1)} Earth days</p>
+                `;
+                container.appendChild(infoBox);
+
+                // Animate planet
+                animatePlanet(planetElement, centerX, centerY, planet.distance, planet.radius, planet.orbitSpeed);
+
+                // Show info box on hover
+                planetElement.addEventListener('mouseenter', function() {
+                    const planetRect = planetElement.getBoundingClientRect();
+                    const infoBox = document.getElementById(`${planet.name.toLowerCase()}-info`);
+                    infoBox.style.left = `${planetRect.left + planetRect.width / 2 - containerRect.left}px`;
+                    infoBox.style.top = `${planetRect.top - 10 - containerRect.top}px`;
+                    infoBox.classList.add('planet-info-visible');
+                });
+
+                planetElement.addEventListener('mouseleave', function() {
+                    document.getElementById(`${planet.name.toLowerCase()}-info`).classList.remove('planet-info-visible');
+                });
+            });
+        }
+
+        function animatePlanet(planetElement, centerX, centerY, distance, radius, speed) {
+            let angle = Math.random() * Math.PI * 2;
+            
+            function updatePosition() {
+                angle += speed * 0.005;
+                const x = centerX + Math.cos(angle) * distance - radius;
+                const y = centerY + Math.sin(angle) * distance - radius;
+                
+                planetElement.style.left = `${x}px`;
+                planetElement.style.top = `${y}px`;
+                
+                requestAnimationFrame(updatePosition);
+            }
+            
+            updatePosition();
+        }
+    </script>
+</body>
+</html>
